@@ -1,52 +1,190 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.util.List" %>
+<%@ page import="com.model.Task" %>
+<%@ page import="com.model.User" %>
+<%@ page import="com.dao.TaskDao" %>
+<%@ page session="true" %>
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <title>Edit Task</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('https://images.pexels.com/photos/5412/water-blue-ocean.jpg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="date"], input[type="time"], input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .alert {
+            padding: 10px;
+            background-color: #f44336;
+            color: white;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">Time Tracker</a>
-        <div class="collapse navbar-collapse">
-            <ul class="navbar-nav mr-auto">
-                <li class="nav-item"><a class="nav-link" href="dashboard.jsp">Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" href="logout.jsp">Logout</a></li>
-            </ul>
-        </div>
-    </nav>
-    <section class="container">
-        <fieldset>
-            <legend>Edit Task</legend>
-            <form action="EditTaskServlet" method="post">
-                <input type="hidden" name="taskId" value="${task.taskId}">
-                <div class="form-group">
-                    <label for="project">Project:</label>
-                    <input type="text" class="form-control" id="project" name="project" value="${task.project}" required>
-                </div>
-                <div class="form-group">
-                    <label for="taskDate">Date:</label>
-                    <input type="date" class="form-control" id="taskDate" name="taskDate" value="${task.taskDate}" required>
-                </div>
-                <div class="form-group">
-                    <label for="startTime">Start Time:</label>
-                    <input type="time" class="form-control" id="startTime" name="startTime" value="${task.startTime}" required>
-                </div>
-                <div class="form-group">
-                    <label for="endTime">End Time:</label>
-                    <input type="time" class="form-control" id="endTime" name="endTime" value="${task.endTime}" required>
-                </div>
-                <div class="form-group">
-                    <label for="category">Category:</label>
-                    <input type="text" class="form-control" id="category" name="category" value="${task.category}" required>
-                </div>
-                <div class="form-group">
-                    <label for="description">Description:</label>
-                    <textarea class="form-control" id="description" name="description" required>${task.description}</textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">Update Task</button>
-            </form>
-        </fieldset>
-    </section>
+    <div class="container">
+        <h1>Edit Task</h1>
+        
+        <%-- Retrieve tasks for the logged-in employee --%>
+        <% User user = (User) session.getAttribute("user");
+           if (user != null) {
+               TaskDao taskDao = new TaskDao();
+               List<Task> tasks = taskDao.getAllTasksForEmployee(user.getEmpId());
+               
+               // Check if tasks exist
+               if (!tasks.isEmpty()) {
+                   // Display tasks in a form for updating
+                   for (Task task : tasks) { %>
+                       
+                       <form action="EditTaskServlet" method="POST">
+                           <input type="hidden" name="taskId" value="<%= task.getId() %>">
+                           
+                           <div class="form-group">
+                               <label>Date</label>
+                               <input type="date" name="date" value="<%= task.getDate() %>" required>
+                           </div>
+                           
+                           <div class="form-group">
+                               <label>Start Time</label>
+                               <input type="time" step="1" name="startTime" id="startTime_<%= task.getId() %>" value="<%= task.getStartTime() %>" required>
+                           </div>
+                           
+                           <div class="form-group">
+                               <label>End Time</label>
+                               <input type="time" step="1" name="endTime" id="endTime_<%= task.getId() %>" value="<%= task.getEndTime() %>" required>
+                           </div>
+                           
+                           <div class="form-group">
+                               <label>Number of Hours</label>
+                               <input type="number" step="0.5" name="numHours" id="numHours_<%= task.getId() %>" value="<%= task.getNumHours() %>" required readonly>
+                           </div>
+                           
+                           <div class="form-group">
+                               <label>Category</label>
+                               <input type="text" name="category" value="<%= task.getCategory() %>" required>
+                           </div>
+                           
+                           <div class="form-group">
+                               <label>Project</label>
+                               <input type="text" name="project" value="<%= task.getProject() %>" required>
+                           </div>
+                           
+                           <%-- Display error message if set --%>
+                           <% String errorMessage = (String) request.getAttribute("errorMessage");
+                              if (errorMessage != null && !errorMessage.isEmpty()) { %>
+                               <div class="alert">
+                                   <%= errorMessage %>
+                               </div>
+                           <% } %>
+                           
+                           <button type="submit">Update Task</button>
+                       </form>
+                       
+                   <% }
+               } else { %>
+                   <div class="alert">
+                       No tasks found for the logged-in user.
+                   </div>
+               <% }
+           } else { %>
+               <div class="alert">
+                   User session not found.
+               </div>
+           <% } %>
+        
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Retrieve all task elements
+            const tasks = document.querySelectorAll('form[action="EditTaskServlet"]');
+
+            // Add event listeners to calculate hours for each task form
+            tasks.forEach(function(taskForm) {
+                const startTimeInput = taskForm.querySelector('input[name="startTime"]');
+                const endTimeInput = taskForm.querySelector('input[name="endTime"]');
+                const numHoursInput = taskForm.querySelector('input[name="numHours"]');
+
+                startTimeInput.addEventListener('change', calculateNumHours);
+                endTimeInput.addEventListener('change', calculateNumHours);
+
+                function calculateNumHours() {
+                    const startTime = startTimeInput.value;
+                    const endTime = endTimeInput.value;
+
+                    if (startTime && endTime) {
+                        const startParts = startTime.split(':');
+                        const endParts = endTime.split(':');
+
+                        const startHour = parseInt(startParts[0], 10);
+                        const startMinute = parseInt(startParts[1], 10);
+                        const startSecond = parseInt(startParts[2], 10);
+
+                        const endHour = parseInt(endParts[0], 10);
+                        const endMinute = parseInt(endParts[1], 10);
+                        const endSecond = parseInt(endParts[2], 10);
+
+                        const startDate = new Date(0, 0, 0, startHour, startMinute, startSecond);
+                        const endDate = new Date(0, 0, 0, endHour, endMinute, endSecond);
+
+                        let diff = (endDate.getTime() - startDate.getTime()) / 1000 / 60 / 60;
+                        if (diff < 0) {
+                            diff += 24;
+                        }
+
+                        numHoursInput.value = diff.toFixed(2);
+                    } else {
+                        numHoursInput.value = '';
+                    }
+                }
+            });
+        });
+    </script>
+    
 </body>
 </html>
