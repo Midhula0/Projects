@@ -12,7 +12,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-image: url('https://images.pexels.com/photos/5412/water-blue-ocean.jpg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');
+            background-image: url('https://images.unsplash.com/photo-1449247709967-d4461a6a6103?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
             background-size: cover;
             background-repeat: no-repeat;
             background-position: center center;
@@ -22,7 +22,7 @@
             max-width: 1000px;
             margin: 0 auto;
             background-color: #fff;
-            padding: 20px;
+            padding: 30px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
@@ -30,7 +30,7 @@
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="#">Employee Dashboard</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -44,16 +44,20 @@
                     <a class="nav-link" href="editTask.jsp">Edit Task</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="deleteTask.jsp">Delete Task</a>
+                    <a class="nav-link" href="deleteTask.jsp">View Task</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="viewTasks.jsp">View Tasks</a>
-                </li>
+              <!-- 
+            <li class="nav-item">
+                    <a class="nav-link" href="empviewtask.jsp">View Tasks</a>
+                </li> -->
                 <li class="nav-item">
                     <a class="nav-link" href="viewCharts.jsp">View Charts</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="changePassword.jsp">Change Password</a>
+                </li>
+                 <li class="nav-item">
+                    <a class="nav-link" href="logout.jsp">Logout</a>
                 </li>
                 
             </ul>
@@ -80,7 +84,7 @@
                 }
             } else {
         %>
-        <p class="text-center text-danger">You are not logged in. Please <a href="login.jsp">log in</a> to access the dashboard.</p>
+        <p class="text-center text-danger">You are not logged in. Please <a href="index.jsp">log in</a> to access the dashboard.</p>
         <%
             }
         %>
