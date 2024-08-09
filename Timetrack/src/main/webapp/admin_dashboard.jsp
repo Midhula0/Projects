@@ -10,7 +10,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            background-image: url('https://images.pexels.com/photos/5412/water-blue-ocean.jpg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');
+            background-image: url('https://images.unsplash.com/photo-1518655048521-f130df041f66?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
             background-size: cover;
             background-repeat: no-repeat;
             background-position: center center;
@@ -21,6 +21,7 @@
         }
         .navbar-nav .nav-item + .nav-item {
             margin-left: 15px;
+            background-color:balck;
         }
         .card {
             margin-bottom: 20px;
@@ -43,7 +44,7 @@
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="admin_dashboard.jsp"><i class="fas fa-tachometer-alt"></i> Admin Dashboard</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -52,7 +53,7 @@
             <ul class="navbar-nav ml-auto">
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="login.jsp"><i class="fas fa-eye"></i> Logout</a>
+                    <a class="nav-link" href="logout.jsp"><i class="fas fa-eye"></i> Logout</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href=""><i class="fas fa-chart-bar"></i> Home</a>
