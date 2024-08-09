@@ -7,5 +7,5 @@
         sessions.invalidate();
     }
     // Redirect to the login page
-    response.sendRedirect("login.jsp");
+    response.sendRedirect("index.jsp");
 %>
