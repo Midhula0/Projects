@@ -11,7 +11,7 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-image: url('https://images.pexels.com/photos/5412/water-blue-ocean.jpg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');
+            background-image: url('https://images.unsplash.com/photo-1518655048521-f130df041f66?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
             background-size: cover;
             background-repeat: no-repeat;
             background-position: center center;
@@ -24,23 +24,27 @@
         }
         .container {
             max-width: 600px;
-            background: #fff;
+            background: rgba(255, 255, 255, 0.2);
             padding: 40px;
             border-radius: 15px;
             box-shadow: 0px 0px 25px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         h1 {
-            color: #343a40;
+            color: black;
             text-align: center;
             margin-bottom: 30px;
             font-weight: 700;
         }
         .form-group label {
             font-weight: 600;
-            color: #495057;
+            color: black;
         }
         .form-control {
             border-radius: 0.5rem;
+            background-color: rgba(255, 255, 255, 0.8);
         }
         .btn-custom {
             background-color: #28a745;
@@ -118,7 +122,6 @@
 
         <%-- Links to change password and home page --%>
         <div class="link-container">
-           
             <a href="admin_dashboard.jsp" class="btn btn-secondary">
                 <i class="fas fa-home"></i> Home
             </a>
