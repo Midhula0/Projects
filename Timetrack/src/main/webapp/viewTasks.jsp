@@ -13,7 +13,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            background-image: url('https://images.pexels.com/photos/5412/water-blue-ocean.jpg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');
+           background-image: url('https://images.unsplash.com/photo-1518655048521-f130df041f66?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
             background-size: cover;
             background-repeat: no-repeat;
             background-position: center center;
@@ -84,7 +84,7 @@
                             <td><%= task.getCategory() %></td>
                             <td><%= task.getProject() %></td>
                             <td class="actions">
-                                <a href="adminEditTask.jsp?taskId=<%= task.getEmpId() %>" class="btn btn-warning btn-sm" data-toggle="tooltip" title="Edit">
+                                <a href="adminEditTask.jsp?taskId=<%= task.getId() %>" class="btn btn-warning btn-sm" data-toggle="tooltip" title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <form action="AdminDeleteTaskServlet" method="post" style="display:inline;">
