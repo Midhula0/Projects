@@ -2,7 +2,6 @@ package com.dao;
 
 import java.sql.Connection;
 import java.sql.Date;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,62 +17,161 @@ import com.model.Task;
 public class TaskDao {
 
     // Method to insert a new task into the database
-	public boolean insertTask(Task task) {
-	    String query = "INSERT INTO tasks (emp_id, username, date, start_time, end_time, num_hours, category, project) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-	    boolean isInserted = false;
+    public boolean insertTask(Task task) {
+    	 boolean insertTask = false;
+        String sql = "INSERT INTO tasks (emp_id,username, date, start_time, end_time, num_hours, category, project) VALUES (?,?,?, ?, ?, ?, ?,?)";
 
-	    try (Connection conn = DatabaseConnection.getConnection();
-	         PreparedStatement stmt = conn.prepareStatement(query)) {
+        // Validate total hours before insertion
+//        if (!validateTotalHoursPerDay(task.getUsername(), task.getDate(), task.getNumHours())) {
+//            System.out.println("Total hours limit exceeded for user on this date.");
+//            return false;
+//        }
 
-	        stmt.setInt(1, task.getEmpId());
-	        stmt.setString(2, task.getUsername());
-	        stmt.setDate(3, task.getDate());
-	        stmt.setTime(4, task.getStartTime());
-	        stmt.setTime(5, task.getEndTime());
-	        stmt.setDouble(6, task.getNumHours());
-	        stmt.setString(7, task.getCategory());
-	        stmt.setString(8, task.getProject());
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
 
-	        int rowsAffected = stmt.executeUpdate();
-	        isInserted = (rowsAffected > 0);
+            statement.setInt(1, task.getEmpId());
+           statement.setString(2, task.getUsername());
+            statement.setDate(3, task.getDate());
+            statement.setTime(4, task.getStartTime());
+            statement.setTime(5, task.getEndTime());
+            statement.setDouble(6, task.getNumHours());
+            statement.setString(7, task.getCategory());
+            statement.setString(8, task.getProject());
+            
+            double totalHours = getTotalHoursForDate(task.getEmpId(), task.getDate(), connection);
+            if (totalHours + task.getNumHours() > 8.0) {
+                // Total hours exceed limit
+                return false;
+            }
 
-	    } catch (SQLException e) {
-	        e.printStackTrace();
-	    }
+            insertTask = statement.executeUpdate() > 0;
 
-	    return isInserted;
-	}
+            int rowsInserted = statement.executeUpdate();
+            return rowsInserted > 0;
+            
+            
 
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    private double getTotalHoursForDate(int empId, java.sql.Date date, Connection connection) throws SQLException {
+        String sql = "SELECT SUM(num_hours) FROM tasks WHERE emp_id = ? AND date = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, empId);
+            statement.setDate(2, date);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getDouble(1);
+                }
+            }
+        }
+        return 0.0;
+    }
+    
+    public int getEmpIdByUsername(String username) {
+        String sql = "SELECT emp_id FROM users WHERE username = ?";
+        
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, username);
+            
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("emp_id");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1; // Return -1 if not found
+    }
 
     // Validate total hours per day for a user
-	public boolean validateTotalHoursPerDay(String username, java.sql.Date date, double numHours) {
-	    boolean isValid = true;
-	    String query = "SELECT SUM(num_hours) FROM tasks WHERE username = ? AND date = ?";
+    private boolean validateTotalHoursPerDay(String username, Date date, double newHours) {
+        String sql = "SELECT SUM(num_hours) AS total_hours FROM tasks WHERE username = ? AND date = ?";
 
-	    try (Connection conn = DatabaseConnection.getConnection();
-	         PreparedStatement stmt = conn.prepareStatement(query)) {
-	        
-	        stmt.setString(1, username);
-	        stmt.setDate(2, date);
-	        
-	        ResultSet rs = stmt.executeQuery();
-	        
-	        if (rs.next()) {
-	            double totalHours = rs.getDouble(1);
-	            if ((totalHours + numHours) > 8) {
-	                isValid = false;
-	            }
-	        }
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
 
-	    } catch (SQLException e) {
-	        e.printStackTrace();
-	        isValid = false;
-	    }
+            statement.setString(1, username);
+            statement.setDate(2, date);
+            ResultSet resultSet = statement.executeQuery();
 
-	    return isValid;
-	}
+            if (resultSet.next()) {
+                double totalHours = resultSet.getDouble("total_hours");
+                if (totalHours + newHours > 8.0) { // Check if adding newHours exceeds 8 hours
+                    return false;
+                }
+            }
 
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+    
+    public List<Task> getTasksByUsername(String username) {
+        List<Task> tasks = new ArrayList<>();
+        String sql = "SELECT * FROM tasks WHERE username = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+            
+            while (rs.next()) {
+                Task task = new Task();
+                task.setId(rs.getInt("id"));
+                task.setUsername(rs.getString("username"));
+                task.setDate(rs.getDate("date"));
+                task.setStartTime(rs.getTime("start_time"));
+                task.setEndTime(rs.getTime("end_time"));
+                task.setNumHours(rs.getInt("num_hours"));
+                task.setCategory(rs.getString("category"));
+                task.setProject(rs.getString("project"));
+                tasks.add(task);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return tasks;
+    }
 
+    public List<Task> getTasksByEmpId(int empId) {
+        List<Task> tasks = new ArrayList<>();
+        String sql = "SELECT * FROM tasks WHERE emp_id = ?";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, empId);
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                Task task = new Task();
+                task.setId(resultSet.getInt("id"));
+                task.setEmpId(resultSet.getInt("emp_id"));
+                task.setUsername(resultSet.getString("username"));
+                task.setDate(resultSet.getDate("date"));
+                task.setStartTime(resultSet.getTime("start_time"));
+                task.setEndTime(resultSet.getTime("end_time"));
+                task.setNumHours(resultSet.getDouble("num_hours"));
+                task.setCategory(resultSet.getString("category"));
+                task.setProject(resultSet.getString("project"));
+
+                tasks.add(task);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return tasks;
+    }
     // Method to retrieve all tasks for a specific employee
     public List<Task> getAllTasksForEmployee(int empId) {
         List<Task> tasks = new ArrayList<>();
@@ -136,6 +234,8 @@ public class TaskDao {
         }
         return task;
     }
+    
+    
 
     // Method to update an existing task in the database
     public boolean updateTask(Task task) {
@@ -173,6 +273,19 @@ public class TaskDao {
             int rowsDeleted = statement.executeUpdate();
             return rowsDeleted > 0;
 
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    public boolean deleteTasksByEmpId(int empId) {
+        String sql = "DELETE FROM tasks WHERE emp_id = ?";
+        
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, empId);
+            int rowsDeleted = statement.executeUpdate();
+            return rowsDeleted > 0;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
@@ -233,7 +346,44 @@ public class TaskDao {
         return tasks;
     }
     
-    
+    public Map<String, Double> getEmployeeHoursForYear(int year) throws SQLException {
+        Map<String, Double> employeeHoursMap = new HashMap<>();
+        String query = "SELECT username, SUM(hours) AS total_hours " +
+                       "FROM tasks WHERE YEAR(task_date) = ? GROUP BY username";
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setInt(1, year);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String employeeName = rs.getString("username");
+                    double totalHours = rs.getDouble("total_hours");
+                    employeeHoursMap.put(employeeName, totalHours);
+                }
+            }
+        }
+        return employeeHoursMap;
+    }
+
+    public Map<String, Double> getEmployeeHoursForMonth(int year, int month) throws SQLException {
+        Map<String, Double> employeeHoursMap = new HashMap<>();
+        String query = "SELECT username, SUM(num_hours) AS total_hours " +
+                       "FROM tasks WHERE YEAR(date) = ? AND MONTH(date) = ? GROUP BY username";
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setInt(1, year);
+            ps.setInt(2, month);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String employeeName = rs.getString("username");
+                    double totalHours = rs.getDouble("total_hours");
+                    employeeHoursMap.put(employeeName, totalHours);
+                }
+            }
+        }
+        return employeeHoursMap;
+    }
     public List<Task> getMonthlyTasksForEmployeeOnYear(int year) {
         List<Task> tasks = new ArrayList<>();
         String sql = "SELECT MONTH(date) AS month, SUM(num_hours) AS totalHours FROM tasks WHERE YEAR(date) = ? GROUP BY MONTH(date)";
@@ -316,6 +466,45 @@ public class TaskDao {
         }
         return tasks;
     }
+    
+    public Map<String, Double> getProjectHoursForYear(int year) throws SQLException {
+        Map<String, Double> projectHoursMap = new HashMap<>();
+        String query = "SELECT project, SUM(num_hours) AS total_hours " +
+                       "FROM tasks WHERE YEAR(date) = ? GROUP BY project";
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setInt(1, year);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String projectName = rs.getString("project");
+                    double totalHours = rs.getDouble("total_hours");
+                    projectHoursMap.put(projectName, totalHours);
+                }
+            }
+        }
+        return projectHoursMap;
+    }
+    
+    public Map<String, Double> getProjectHoursForMonth(int year, int month) throws SQLException {
+        Map<String, Double> projectHoursMap = new HashMap<>();
+        String query = "SELECT project, SUM(hours) AS total_hours " +
+                       "FROM tasks WHERE YEAR(date) = ? AND MONTH(date) = ? GROUP BY project";
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setInt(1, year);
+            ps.setInt(2, month);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String projectName = rs.getString("project");
+                    double totalHours = rs.getDouble("total_hours");
+                    projectHoursMap.put(projectName, totalHours);
+                }
+            }
+        }
+        return projectHoursMap;
+    }
     public List<Task> getTasksForMonth(int year, int month, Date startDate, Date endDate) {
         List<Task> tasks = new ArrayList<>();
         String sql = "SELECT * FROM tasks WHERE YEAR(date) = ? AND MONTH(date) = ? AND date BETWEEN ? AND ?";
@@ -373,22 +562,24 @@ public class TaskDao {
     }
     public List<Task> getAllTasks() {
         List<Task> tasks = new ArrayList<>();
-        String query = "SELECT empId, username, date, startTime, endTime, numHours, category, project FROM tasks";
+        String query = "SELECT * FROM tasks";
 
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-            	Task task = new Task();
-                task.setEmpId(rs.getInt("empId"));
-                task.setUsername(rs.getString("username"));  // This line might be causing the error
+                Task task = new Task();
+                task.setId(rs.getInt("id"));
+                task.setUsername(rs.getString("username"));
+                task.setEmpId(rs.getInt("emp_id"));
                 task.setDate(rs.getDate("date"));
-                task.setStartTime(rs.getTime("startTime"));
-                task.setEndTime(rs.getTime("endTime"));
-                task.setNumHours(rs.getDouble("numHours"));
+                task.setStartTime(rs.getTime("start_time"));
+                task.setEndTime(rs.getTime("end_time"));
+                task.setNumHours(rs.getDouble("num_hours"));
                 task.setCategory(rs.getString("category"));
                 task.setProject(rs.getString("project"));
+
                 tasks.add(task);
             }
 
@@ -508,79 +699,141 @@ public class TaskDao {
         return projectHours;
     }
 
-    public Map<String, Double> getProjectHoursForMonth(int year, int month) throws SQLException {
-        String sql = "SELECT project, SUM(num_hours) as total_hours FROM tasks WHERE YEAR(date) = ? AND MONTH(date) = ? GROUP BY project";
-        Map<String, Double> projectHours = new HashMap<>();
+    public Map<Integer, Map<String, Double>> getProjectHoursForWeeksInMonth(int year, int month) throws SQLException {
+        Map<Integer, Map<String, Double>> weeklyProjectHours = new HashMap<>();
+        String query = "SELECT WEEK(date) as week, project, SUM(num_hours) as totalHours FROM tasks WHERE YEAR(date) = ? AND MONTH(date) = ? GROUP BY week, project";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, year);
+            stmt.setInt(2, month);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    int week = rs.getInt("week");
+                    String project = rs.getString("project");
+                    double hours = rs.getDouble("totalHours");
+                    
+                    weeklyProjectHours.putIfAbsent(week, new HashMap<>());
+                    weeklyProjectHours.get(week).put(project, hours);
+                }
+            }
+        }
+        return weeklyProjectHours;
+    }
 
+
+    public Map<Integer, Map<String, Double>> getProjectHoursForMonthsInYear(int year) {
+        Map<Integer, Map<String, Double>> monthlyProjectHoursMap = new HashMap<>();
+
+        // Initialize the map with each month
+        for (int month = 1; month <= 12; month++) {
+            monthlyProjectHoursMap.put(month, new HashMap<>());
+        }
+
+        String sql = "SELECT MONTH(date) AS month, project, SUM(num_hours) AS total_hours " +
+                     "FROM tasks " +
+                     "WHERE YEAR(date) = ? " +
+                     "GROUP BY MONTH(date), project";
+        
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, year);
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    int month = rs.getInt("month");
+                    String project = rs.getString("project");
+                    double totalHours = rs.getDouble("total_hours");
+
+                    Map<String, Double> projectHours = monthlyProjectHoursMap.get(month);
+                    projectHours.put(project, totalHours);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return monthlyProjectHoursMap;
+    }
+
+
+ // TaskDao.java
+
+    public Map<Integer, Map<String, Double>> getEmployeeHoursForWeeksInMonth(int year, int month) {
+        Map<Integer, Map<String, Double>> weeklyEmployeeHoursMap = new HashMap<>();
+
+        // Initialize the map for weeks
+        for (int week = 1; week <= 4; week++) {
+            weeklyEmployeeHoursMap.put(week, new HashMap<>());
+        }
+
+        String sql = "SELECT WEEK(date, 3) AS week, username, SUM(num_hours) AS total_hours " +
+                     "FROM tasks " +
+                     "WHERE YEAR(date) = ? AND MONTH(date) = ? " +
+                     "GROUP BY WEEK(date, 3), username";
+        
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, year);
             statement.setInt(2, month);
-            ResultSet resultSet = statement.executeQuery();
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    int week = rs.getInt("week");
+                    String username = rs.getString("username");
+                    double totalHours = rs.getDouble("total_hours");
 
-            while (resultSet.next()) {
-                projectHours.put(resultSet.getString("project"), resultSet.getDouble("total_hours"));
+                    // Ensure the employeeHours map is initialized
+                    Map<String, Double> employeeHours = weeklyEmployeeHoursMap.get(week);
+                    if (employeeHours == null) {
+                        employeeHours = new HashMap<>();
+                        weeklyEmployeeHoursMap.put(week, employeeHours);
+                    }
+                    employeeHours.put(username, employeeHours.getOrDefault(username, 0.0) + totalHours);
+                }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
-        return projectHours;
+        return weeklyEmployeeHoursMap;
     }
 
-    public Map<String, Double> getProjectHoursForYear(int year) throws SQLException {
-        String sql = "SELECT project, SUM(num_hours) as total_hours FROM tasks WHERE YEAR(date) = ? GROUP BY project";
-        Map<String, Double> projectHours = new HashMap<>();
+    public Map<Integer, Map<String, Double>> getEmployeeHoursForMonthsInYear(int year) {
+        Map<Integer, Map<String, Double>> monthlyEmployeeHoursMap = new HashMap<>();
 
+        // Initialize the map for months
+        for (int month = 1; month <= 12; month++) {
+            monthlyEmployeeHoursMap.put(month, new HashMap<>());
+        }
+
+        String sql = "SELECT MONTH(date) AS month, username, SUM(num_hours) AS total_hours " +
+                     "FROM tasks " +
+                     "WHERE YEAR(date) = ? " +
+                     "GROUP BY MONTH(date), username";
+        
         try (Connection connection = DatabaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, year);
-            ResultSet resultSet = statement.executeQuery();
-
-            while (resultSet.next()) {
-                projectHours.put(resultSet.getString("project"), resultSet.getDouble("total_hours"));
-            }
-        }
-
-        return projectHours;
-    }
-    public Map<String, Double> getEmployeeHoursForMonth(int year, int month) throws SQLException {
-        Map<String, Double> employeeHours = new HashMap<>();
-        String sql = "SELECT username, SUM(num_hours) as total_hours " +
-                     "FROM tasks " +
-                     "WHERE YEAR(date) = ? AND MONTH(date) = ? " +
-                     "GROUP BY username";
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, year);
-            pstmt.setInt(2, month);
-            try (ResultSet rs = pstmt.executeQuery()) {
+            try (ResultSet rs = statement.executeQuery()) {
                 while (rs.next()) {
-                    String employeeName = rs.getString("username");
-                    Double totalHours = rs.getDouble("total_hours");
-                    employeeHours.put(employeeName, totalHours);
+                    int month = rs.getInt("month");
+                    String username = rs.getString("username");
+                    double totalHours = rs.getDouble("total_hours");
+
+                    // Ensure the employeeHours map is initialized
+                    Map<String, Double> employeeHours = monthlyEmployeeHoursMap.get(month);
+                    if (employeeHours == null) {
+                        employeeHours = new HashMap<>();
+                        monthlyEmployeeHoursMap.put(month, employeeHours);
+                    }
+                    employeeHours.put(username, employeeHours.getOrDefault(username, 0.0) + totalHours);
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        return employeeHours;
-    }
-    public Map<String, Double> getEmployeeHoursForYear(int year) throws SQLException {
-        Map<String, Double> employeeHours = new HashMap<>();
-        String sql = "SELECT username, SUM(num_hours) as total_hours " +
-                     "FROM tasks " +
-                     "WHERE YEAR(date) = ? " +
-                     "GROUP BY username";
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, year);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    String employeeName = rs.getString("username");
-                    Double totalHours = rs.getDouble("total_hours");
-                    employeeHours.put(employeeName, totalHours);
-                }
-            }
-        }
-        return employeeHours;
+        return monthlyEmployeeHoursMap;
     }
+
 }
