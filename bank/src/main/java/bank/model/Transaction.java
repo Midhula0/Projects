@@ -1,43 +1,52 @@
-package bank.model;
+package bank.models;
 
 import java.sql.Timestamp;
 
 public class Transaction {
     private int transactionId;
-    private int customerId;
-    private String transactionType;
+    private String accountNo;
+    private String type;
     private double amount;
-    private Timestamp transactionDate;
-	public int getTransactionId() {
-		return transactionId;
-	}
-	public void setTransactionId(int transactionId) {
-		this.transactionId = transactionId;
-	}
-	public int getCustomerId() {
-		return customerId;
-	}
-	public void setCustomerId(int customerId) {
-		this.customerId = customerId;
-	}
-	public String getTransactionType() {
-		return transactionType;
-	}
-	public void setTransactionType(String transactionType) {
-		this.transactionType = transactionType;
-	}
-	public double getAmount() {
-		return amount;
-	}
-	public void setAmount(double amount) {
-		this.amount = amount;
-	}
-	public Timestamp getTransactionDate() {
-		return transactionDate;
-	}
-	public void setTransactionDate(Timestamp transactionDate) {
-		this.transactionDate = transactionDate;
-	}
+    private Timestamp date;
 
     // Getters and setters
+    public int getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(int transactionId) {
+        this.transactionId = transactionId;
+    }
+
+    public String getAccountNo() {
+        return accountNo;
+    }
+
+    public void setAccountNo(String accountNo) {
+        this.accountNo = accountNo;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public void setAmount(double amount) {
+        this.amount = amount;
+    }
+
+    public Timestamp getDate() {
+        return date;
+    }
+
+    public void setDate(Timestamp date) {
+        this.date = date;
+    }
 }
