@@ -10,7 +10,7 @@ public class DatabaseConnection {
 
     private static final String JDBC_URL = "jdbc:mysql://localhost:3306/bankdb";
     private static final String JDBC_USER = "root";
-    private static final String JDBC_PASSWORD = "Sushma3134";
+    private static final String JDBC_PASSWORD = "Midhu@123";
 
     private Connection connection;
 
