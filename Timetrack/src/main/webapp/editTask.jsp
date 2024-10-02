@@ -18,7 +18,7 @@
             background-position: center center;
             margin: 0;
             padding: 20px;
-            height: 100vh;
+            height: 150vh;
         }
         .container {
             max-width: 600px;
@@ -77,41 +77,61 @@
                List<Task> tasks = taskDao.getAllTasksForEmployee(user.getEmpId());
                
                // Check if tasks exist
-               if (!tasks.isEmpty()) {
-                   // Display tasks in a form for updating
-                   for (Task task : tasks) { %>
+               if (!tasks.isEmpty()) { %> 
+                
+                <%-- Dropdown to select task --%>
+                <form action="editTask.jsp" method="GET">
+                    <div class="form-group">
+                        <label>Select Task to Edit</label>
+                        <select name="taskId" required>
+                            <% for (Task task : tasks) { %>
+                                <option value="<%= task.getId() %>">
+                                    <%= task.getDate() %> - <%= task.getCategory() %> - <%= task.getProject() %>
+                                </option>
+                            <% } %>
+                        </select>
+                    </div>
+                    <button type="submit">Edit Selected Task</button>
+                </form>
+                
+                <%-- Retrieve the task selected by the user --%>
+                <% String taskIdParam = request.getParameter("taskId");
+                   if (taskIdParam != null && !taskIdParam.isEmpty()) {
+                       int taskId = Integer.parseInt(taskIdParam);
+                       Task selectedTask = taskDao.getTaskById(taskId);
+                       if (selectedTask != null) { %>
                        
                        <form action="EditTaskServlet" method="POST">
-                           <input type="hidden" name="taskId" value="<%= task.getId() %>">
+                           <input type="hidden" name="taskId" value="<%= selectedTask.getId() %>">
                            
                            <div class="form-group">
                                <label>Date</label>
-                               <input type="date" name="date" value="<%= task.getDate() %>" required>
+                               <input type="date" name="date" value="<%= selectedTask.getDate() %>" required>
                            </div>
                            
                            <div class="form-group">
                                <label>Start Time</label>
-                               <input type="time" step="1" name="startTime" id="startTime_<%= task.getId() %>" value="<%= task.getStartTime() %>" required>
+                               <input type="time" step="1" name="startTime" id="startTime_<%= selectedTask.getId() %>" value="<%= selectedTask.getStartTime() %>" required>
                            </div>
                            
                            <div class="form-group">
                                <label>End Time</label>
-                               <input type="time" step="1" name="endTime" id="endTime_<%= task.getId() %>" value="<%= task.getEndTime() %>" required>
+                               <input type="time" step="1" name="endTime" id="endTime_<%= selectedTask.getId() %>" value="<%= selectedTask.getEndTime() %>" required>
                            </div>
                            
                            <div class="form-group">
                                <label>Number of Hours</label>
-                               <input type="number" step="0.5" name="numHours" id="numHours_<%= task.getId() %>" value="<%= task.getNumHours() %>" required readonly>
+                               <input type="number" step="0.5" name="numHours" id="numHours_<%= selectedTask.getId() %>" value="<%= selectedTask.getNumHours() %>" required readonly>
                            </div>
                            
                            <div class="form-group">
                                <label>Category</label>
-                               <input type="text" name="category" value="<%= task.getCategory() %>" required>
+                               <input type="text" name="category" value="<%= selectedTask.getCategory() %>" required>
                            </div>
                            
                            <div class="form-group">
                                <label>Project</label>
-                               <input type="text" name="project" value="<%= task.getProject() %>" required>
+                               <input type="text" name="project" value="<%= selectedTask.getProject() %>" required>
                            </div>
                            
                            <%-- Display error message if set --%>
@@ -125,8 +145,14 @@
                            <button type="submit">Update Task</button>
                        </form>
                        
+                   <% } else { %>
+                       <div class="alert">
+                           Selected task not found.
+                       </div>
                    <% }
-               } else { %>
+                } %>
+                   
+               <% } else { %>
                    <div class="alert">
                        No tasks found for the logged-in user.
                    </div>
@@ -141,48 +167,45 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Retrieve all task elements
-            const tasks = document.querySelectorAll('form[action="EditTaskServlet"]');
+            // Add event listeners to calculate hours for the selected task form
+            const startTimeInput = document.querySelector('input[name="startTime"]');
+            const endTimeInput = document.querySelector('input[name="endTime"]');
+            const numHoursInput = document.querySelector('input[name="numHours"]');
 
-            // Add event listeners to calculate hours for each task form
-            tasks.forEach(function(taskForm) {
-                const startTimeInput = taskForm.querySelector('input[name="startTime"]');
-                const endTimeInput = taskForm.querySelector('input[name="endTime"]');
-                const numHoursInput = taskForm.querySelector('input[name="numHours"]');
-
+            if (startTimeInput && endTimeInput) {
                 startTimeInput.addEventListener('change', calculateNumHours);
                 endTimeInput.addEventListener('change', calculateNumHours);
+            }
 
-                function calculateNumHours() {
-                    const startTime = startTimeInput.value;
-                    const endTime = endTimeInput.value;
+            function calculateNumHours() {
+                const startTime = startTimeInput.value;
+                const endTime = endTimeInput.value;
 
-                    if (startTime && endTime) {
-                        const startParts = startTime.split(':');
-                        const endParts = endTime.split(':');
+                if (startTime && endTime) {
+                    const startParts = startTime.split(':');
+                    const endParts = endTime.split(':');
 
-                        const startHour = parseInt(startParts[0], 10);
-                        const startMinute = parseInt(startParts[1], 10);
-                        const startSecond = parseInt(startParts[2], 10);
+                    const startHour = parseInt(startParts[0], 10);
+                    const startMinute = parseInt(startParts[1], 10);
+                    const startSecond = parseInt(startParts[2], 10);
 
-                        const endHour = parseInt(endParts[0], 10);
-                        const endMinute = parseInt(endParts[1], 10);
-                        const endSecond = parseInt(endParts[2], 10);
+                    const endHour = parseInt(endParts[0], 10);
+                    const endMinute = parseInt(endParts[1], 10);
+                    const endSecond = parseInt(endParts[2], 10);
 
-                        const startDate = new Date(0, 0, 0, startHour, startMinute, startSecond);
-                        const endDate = new Date(0, 0, 0, endHour, endMinute, endSecond);
+                    const startDate = new Date(0, 0, 0, startHour, startMinute, startSecond);
+                    const endDate = new Date(0, 0, 0, endHour, endMinute, endSecond);
 
-                        let diff = (endDate.getTime() - startDate.getTime()) / 1000 / 60 / 60;
-                        if (diff < 0) {
-                            diff += 24;
-                        }
-
-                        numHoursInput.value = diff.toFixed(2);
-                    } else {
-                        numHoursInput.value = '';
+                    let diff = (endDate.getTime() - startDate.getTime()) / 1000 / 60 / 60;
+                    if (diff < 0) {
+                        diff += 24;
                     }
+
+                    numHoursInput.value = diff.toFixed(2);
+                } else {
+                    numHoursInput.value = '';
                 }
-            });
+            }
         });
     </script>
     
