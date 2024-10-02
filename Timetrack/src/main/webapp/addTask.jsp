@@ -18,7 +18,7 @@
             background-position: center center;
             margin: 0;
             padding: 20px;
-            height: 100vh;
+            height: 150vh;
         }
         .container {
             max-width: 600px;
