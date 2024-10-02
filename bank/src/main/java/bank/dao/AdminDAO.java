@@ -1,49 +1,33 @@
 package bank.dao;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
-public class AdminDAO {
-    private String jdbcURL = "jdbc:mysql://localhost:3306/bankdb";
-    private String jdbcUsername = "root";
-    private String jdbcPassword = "Sushma3134";
-    private Connection jdbcConnection;
+public class AccountDAO {
+    private Connection connection;
 
-    protected void connect() throws SQLException {
-        if (jdbcConnection == null || jdbcConnection.isClosed()) {
-            try {
-                Class.forName("com.mysql.cj.jdbc.Driver");
-                jdbcConnection = DriverManager.getConnection(jdbcURL, jdbcUsername, jdbcPassword);
-            } catch (ClassNotFoundException e) {
-                throw new SQLException(e);
-            }
-        }
+    public AccountDAO(Connection connection) {
+        this.connection = connection;
     }
 
-    protected void disconnect() throws SQLException {
-        if (jdbcConnection != null && !jdbcConnection.isClosed()) {
-            jdbcConnection.close();
-        }
-    }
-
-    public boolean validateAdmin(String username, String password) throws SQLException {
-        String sql = "SELECT * FROM admin WHERE username = ? AND password = ?";
-        connect();
-
-        PreparedStatement statement = jdbcConnection.prepareStatement(sql);
-        statement.setString(1, username);
-        statement.setString(2, password);
-
+    public Map<String, Object> getAccountDetailsByNumber(String accountNo) throws SQLException {
+        String sql = "SELECT * FROM customer WHERE account_no = ?";
+        PreparedStatement statement = connection.prepareStatement(sql);
+        statement.setString(1, accountNo);
         ResultSet resultSet = statement.executeQuery();
-        boolean valid = resultSet.next();
 
-        resultSet.close();
-        statement.close();
-        disconnect();
+        if (resultSet.next()) {
+            Map<String, Object> accountDetails = new HashMap<>();
+            accountDetails.put("accountNo", resultSet.getString("account_no"));
+            accountDetails.put("balance", resultSet.getDouble("balance"));
+            // Add other account details as needed
+            return accountDetails;
+        }
 
-        return valid;
+        return null;
     }
 }
