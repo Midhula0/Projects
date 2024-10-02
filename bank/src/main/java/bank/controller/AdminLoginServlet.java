@@ -1,44 +1,52 @@
-package bank.controller;
+package bankcontrollers;
 
+import bank.dao.DatabaseConnection;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import bank.dao.AdminDAO;
-
-
 @WebServlet("/AdminLoginServlet")
 public class AdminLoginServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+       
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        try {
+            PrintWriter out = response.getWriter();
+            response.setContentType("text/html");
 
-    // Handling POST requests from the login form
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // Retrieving username and password from the request parameters
-        String username = request.getParameter("username");
-        String password = request.getParameter("password");
+            DatabaseConnection db = new DatabaseConnection();
+            String name = request.getParameter("username");
+            String pwd = request.getParameter("password");
 
-        // Creating an instance of AdminDAO to interact with admin data
-        AdminDAO adminDAO = new AdminDAO();
+            PreparedStatement ps = db.createPreparedStatement("select username from admin where username=? and password=?");
+            ps.setString(1, name);
+            ps.setString(2, pwd);
+            ResultSet rs = db.executeQuery(ps);
 
-        // Validating admin credentials
-        boolean valid = false;
-		try {
-			valid = adminDAO.validateAdmin(username, password);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+            if(rs.next()) {
+                RequestDispatcher rd = request.getRequestDispatcher("admin_dashboard.jsp");
+                rd.forward(request, response);
+            } else {
+                out.println("Login Failed!!!");
+                out.println("<a href=admin_login.jsp>Try Again!!!</a>");
+            }
 
-        if (valid) {
-            // If credentials are valid, redirect to the admin dashboard
-            response.sendRedirect("admindashboard.jsp");
-        } else {
-            // If credentials are invalid, redirect back to the login page with an error message
-            response.sendRedirect("Adminlogin.jsp?error=Invalid credentials");
+            db.closeConnection();
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
         }
+    }
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        doGet(request, response);
     }
 }
