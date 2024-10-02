@@ -19,7 +19,6 @@ import com.model.User;
 @WebServlet("/AddTaskServlet")
 public class AddTaskServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
-    private TaskDao taskDao = new TaskDao();
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -29,7 +28,7 @@ public class AddTaskServlet extends HttpServlet {
         // Check if sessionUser is null
         if (sessionUser == null) {
             // Redirect to login page or handle unauthorized access
-            response.sendRedirect("admin_dashboard.jsp");
+            response.sendRedirect("index.jsp");
             return;
         }
 
@@ -43,14 +42,12 @@ public class AddTaskServlet extends HttpServlet {
         // Validate form data
         if (dateStr == null || startTimeStr == null || endTimeStr == null || category == null || project == null) {
             // Handle invalid or missing parameters
-            request.setAttribute("errorMessage", "All fields are required.");
-            request.getRequestDispatcher("addTask.jsp").forward(request, response);
+            response.sendRedirect("addTask.jsp");
             return;
         }
 
         // Parse date and times
-        SimpleDateFormat inputDateFormat = new SimpleDateFormat("dd-MM-yyyy");
-        SimpleDateFormat outputDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
         Date date;
         Time startTime;
@@ -58,49 +55,51 @@ public class AddTaskServlet extends HttpServlet {
         double numHours = 0.0;
 
         try {
-            // Parse input date string and format it to the required database format
-            date = inputDateFormat.parse(dateStr);
-            String formattedDateStr = outputDateFormat.format(date);
-
-            // Parse time strings into Time objects
-            startTime = new Time(timeFormat.parse(startTimeStr).getTime());
-            endTime = new Time(timeFormat.parse(endTimeStr).getTime());
+            date = dateFormat.parse(dateStr); // Parse date string into Date object
+            startTime = new Time(timeFormat.parse(startTimeStr).getTime()); // Parse start time string into Time object
+            endTime = new Time(timeFormat.parse(endTimeStr).getTime()); // Parse end time string into Time object
 
             // Calculate num_hours
             long durationInMillis = endTime.getTime() - startTime.getTime();
             numHours = durationInMillis / (1000.0 * 60 * 60); // Convert milliseconds to hours
 
-            // Validate total hours per day
-            boolean isValid = taskDao.validateTotalHoursPerDay(sessionUser.getUsername(), java.sql.Date.valueOf(formattedDateStr), numHours);
-            if (!isValid) {
-                request.setAttribute("errorMessage", "Total hours for the day exceed 8 hours.");
-                request.getRequestDispatcher("addTask.jsp").forward(request, response);
-                return;
-            }
-
-            // Create Task object
-            Task task = new Task();
-            task.setEmpId(sessionUser.getEmpId());
-            task.setUsername(sessionUser.getUsername());
-            task.setDate(java.sql.Date.valueOf(formattedDateStr));
-            task.setStartTime(startTime);
-            task.setEndTime(endTime);
-            task.setNumHours(numHours);
-            task.setCategory(category);
-            task.setProject(project);
-
-            // Insert task into the database
-            boolean isInserted = taskDao.insertTask(task);
-            if (isInserted) {
-                response.sendRedirect("task_success.jsp");
-            } else {
-                request.setAttribute("errorMessage", "Error adding task. Please try again.");
-                request.getRequestDispatcher("addTask.jsp").forward(request, response);
-            }
-
         } catch (ParseException e) {
             e.printStackTrace();
-            request.setAttribute("errorMessage", "Invalid date or time format.");
+            response.sendRedirect("addTask.jsp"); // Redirect back to form on error
+            return;
+        }
+
+        // Create Task object
+        Task task = new Task();
+        task.setEmpId(sessionUser.getEmpId());
+        task.setUsername(sessionUser.getUsername());
+        task.setDate(new java.sql.Date(date.getTime())); // Convert java.util.Date to java.sql.Date
+        task.setStartTime(startTime);
+        task.setEndTime(endTime);
+        task.setNumHours(numHours);
+        task.setCategory(category);
+        task.setProject(project);
+
+        // Insert task into database
+        TaskDao taskDao = new TaskDao();
+        boolean taskInserted = taskDao.insertTask(task);
+
+        if (taskInserted) {
+            // Check the user's role and redirect accordingly
+            if ("admin".equalsIgnoreCase(sessionUser.getRole())) {
+                // Redirect to admin dashboard
+                response.sendRedirect("admin_dashboard.jsp");
+            } else if ("employee".equalsIgnoreCase(sessionUser.getRole())) {
+                // Redirect to employee dashboard
+                response.sendRedirect("employeeDashboard.jsp");
+            } else {
+                // Handle other roles if necessary or redirect to a default dashboard
+                response.sendRedirect("defaultDashboard.jsp");
+            }
+        } else {
+            // Handle insertion failure (e.g., display error message or redirect)
+            String errorMessage = "Work hour exceeds more than 8.";
+            request.setAttribute("errorMessage", errorMessage);
             request.getRequestDispatcher("addTask.jsp").forward(request, response);
         }
     }
