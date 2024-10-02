@@ -1,27 +1,22 @@
-package bank.model;
-
-import java.sql.Date;
+package bank.models;
 
 public class Customer {
-    private int customerId;
+    private String accountNo;
     private String fullName;
     private String address;
-    private String mobile;
-    private String email;
+    private String mobileNo;
+    private String emailId;
     private String accountType;
-    private Date dob;
+    private String dob;
     private String idProof;
-    private String accountNo;
-    private String accountStatus;
 
     // Getters and Setters
-
-    public int getCustomerId() {
-        return customerId;
+    public String getAccountNo() {
+        return accountNo;
     }
 
-    public void setCustomerId(int customerId) {
-        this.customerId = customerId;
+    public void setAccountNo(String accountNo) {
+        this.accountNo = accountNo;
     }
 
     public String getFullName() {
@@ -40,20 +35,20 @@ public class Customer {
         this.address = address;
     }
 
-    public String getMobile() {
-        return mobile;
+    public String getMobileNo() {
+        return mobileNo;
     }
 
-    public void setMobile(String mobile) {
-        this.mobile = mobile;
+    public void setMobileNo(String mobileNo) {
+        this.mobileNo = mobileNo;
     }
 
-    public String getEmail() {
-        return email;
+    public String getEmailId() {
+        return emailId;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setEmailId(String emailId) {
+        this.emailId = emailId;
     }
 
     public String getAccountType() {
@@ -64,11 +59,11 @@ public class Customer {
         this.accountType = accountType;
     }
 
-    public Date getDob() {
+    public String getDob() {
         return dob;
     }
 
-    public void setDob(Date dob) {
+    public void setDob(String dob) {
         this.dob = dob;
     }
 
@@ -79,15 +74,4 @@ public class Customer {
     public void setIdProof(String idProof) {
         this.idProof = idProof;
     }
-
-    public String getAccountNo() {
-        return accountNo;
-    }
-
-    public void setAccountNo(String accountNo) {
-        this.accountNo = accountNo;
-    }
-
-    
-    }
-
+}
